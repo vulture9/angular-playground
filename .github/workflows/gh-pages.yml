@@ -1,35 +1,71 @@
 name: GitHub Pages
 
-on:
-  push:
-    branches:
-    - main
+
+
+on: push
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: checkout repo
+        uses: actions/checkout@v4
+      - name: use node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '16'
+      - run: npm install
+      - run: npm run build:prod
 
-    - name: Install dependencies
-      run: npm install
+  test:
+    needs: build
+    runs-on: ubuntu-latest
 
-    - name: Run tests
-      run: npm run test:headless
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v4
+      - name: use node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
 
-    - name: Build
-      run: npm run build:prod
+      - run: npm install
+      - run: npm run test:headless
+ 
+  deploy:
+    needs: test
 
-    - name: Deploy
-      if: success()
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: dist/angular-github-actions
-        enable_jekyll: true
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    environment:
+      name: production
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: use node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - run: npm install
+      - run: npm run build:prod
+      - name: upload artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist/angular-playground'
+      - name: deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+        
