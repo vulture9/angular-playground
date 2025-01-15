@@ -28,6 +28,6 @@ jobs:
         cache: 'npm'
     - run: npm ci
     - run: npm run build:prod --if-present
-    - run: npm test:headless
+    - run: npm run test:headless
 
     
